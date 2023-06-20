@@ -38,16 +38,23 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
+        self.root.after(5000, self.receive_message)
         self.root.mainloop()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.root.destroy()
 
+    def receive_message(self):
+        msg = self.chat_app.network_manager.receive_message()
+        if msg:
+            self.display_message(msg)
+        self.root.after(5000, self.receive_message)
+
     def send_message(self):
         message = self.text_field.get()
         if message:
-            self.chat_app.send_message(message)
+            self.chat_app.network_manager.send_message(message)
 
     def send_file(self):
         file_path = filedialog.askopenfilename()
@@ -57,13 +64,10 @@ class GuiManager:
     def update_status(self):
         print(self.chat_app.network_manager.info)
         if self.chat_app.network_manager.is_connected: 
-            print(self.chat_app.network_manager.send_message("test 1234"))
-            print(self.chat_app.network_manager.receive_message())
             self.status_label['text'] = "Conntected"
         else: 
-            print("Is disconnected")
             self.chat_app.network_manager.connect()
-            #self.status_label['text'] = "Disconnected"
+        self.receive_message()
 
     def update_progress(self, value):
         self.progress['value'] = value

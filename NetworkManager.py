@@ -55,9 +55,15 @@ class NetworkManager:
     def receive_message(self):
         if self.client_socket is not None:
             try:
+                self.client_socket.settimeout(1)  # Set a timeout of 5 seconds
                 message = self.client_socket.recv(self.buffer_size).decode()
-                print("Received message:", message)
-                return message
+                if message:
+                    print("Received message:", message)
+                    return message
+                else:
+                    print("No message received.")
+            except socket.timeout:
+                print("Timeout: No message received.")
             except socket.error as e:
                 print("Error receiving message:", str(e))
         else:
