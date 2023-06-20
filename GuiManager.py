@@ -3,6 +3,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 import threading
+import time
 
 class GuiManager:
 
@@ -39,26 +40,30 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
-        self.receive_thread = threading.Thread(target=self.receive_message)
-        self.receive_thread.daemon = True  # Daemonize the thread so it exits when the main program finishes
+        self.receive_thread = threading.Thread(target=self.receive_messages_background)
+        self.receive_thread.daemon = True
         self.receive_thread.start()
-        self.root.after(1000, self.update_status)
+        self.receive_thread = threading.Thread(target=self.update_status)
+        self.receive_thread.daemon = True
+        self.receive_thread.start()
         self.root.mainloop()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.root.destroy()
 
-    def receive_message(self):
-        msg = self.chat_app.network_manager.receive_message()
-        if msg:
-            self.display_message(msg)
-        self.root.after(1000, self.receive_message)
+    def receive_messages_background(self):
+        while True:
+            msg = self.chat_app.network_manager.receive_message()
+            if msg:
+                self.display_message("Friend: " + msg)
+            time.sleep(1)
 
     def send_message(self):
-        message = self.text_field.get()
+        message = self.text_field.get() + " "
         if message:
             self.chat_app.network_manager.send_message(message)
+            self.display_message(f"You: {message}")
 
     def send_file(self):
         file_path = filedialog.askopenfilename()
