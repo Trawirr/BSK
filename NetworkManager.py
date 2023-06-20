@@ -1,3 +1,4 @@
+import select
 import socket
 import threading
 
@@ -10,7 +11,7 @@ class NetworkManager:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(("localhost", my_port))
         self.server_socket.listen(1)
-        self.server_thread = threading.Thread(target=self.accept_connection)
+        self.server_thread = threading.Thread(target=self.accept_connection_try_connect)
         self.server_thread.start()
 
     @property
@@ -20,27 +21,41 @@ class NetworkManager:
         client socket: {self.client_socket}
         """)
 
-    def accept_connection(self):
+    def accept_connection_try_connect(self):
         while not self.is_connected:
             print("connecting 1")
-            conn, addr = self.server_socket.accept()
-            if self.client_socket is None:
-                print("connecting 2")
-                print(f"Connection accepted from {addr}")
-                self.client_socket = conn  # Set the client_socket attribute
-                self.is_connected = True
-            else:
-                conn.close()
+            
+            # This line checks if there is a connection request within 2 seconds.
+            ready_to_read, _, _ = select.select([self.server_socket], [], [], 2.0)
+            
+            if ready_to_read:  # If there is a connection request
+                conn, addr = self.server_socket.accept()
+                print('test2')
+                if self.client_socket is None:
+                    print("connecting 2")
+                    print(f"Connection accepted from {addr}")
+                    self.client_socket = conn  # Set the client_socket attribute
+                    self.is_connected = True
+                else:
+                    conn.close()
+                print('test')
+            else:  # If there was no connection request within 2 seconds
+                print("No connection request in last 2 seconds.")
+                # Run your other method here
+                self.connect()
+
 
     def connect(self):
         if self.client_socket is None:
             try:
                 self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.settimeout(2.0)  # Set a timeout of 2 seconds
                 self.client_socket.connect(("localhost", self.client_port))
                 print("Connected to", self.client_socket)
                 self.is_connected = True
-            except ConnectionRefusedError:
+            except (ConnectionRefusedError, socket.timeout):  # Also catch the timeout exception
                 print("Connection failed. Retrying in 5 seconds...")
+
 
     def send_message(self, message):
         if self.client_socket is not None:
