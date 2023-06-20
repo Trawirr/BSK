@@ -26,8 +26,8 @@ class GuiManager:
         self.text_area = tk.Text(self.frame, width=50, height=15)
         self.text_area.grid(row=1, column=0, columnspan=3, pady=(10, 0))
 
-        self.status_button = ttk.Button(self.frame, text='Refresh', command=self.update_status)
-        self.status_button.grid(row=2, column=0, columnspan=3, pady=(10, 0))
+        #self.status_button = ttk.Button(self.frame, text='Refresh', command=self.update_status)
+        #self.status_button.grid(row=2, column=0, columnspan=3, pady=(10, 0))
 
         self.status_label = ttk.Label(self.frame, text='Disconnected')
         self.status_label.grid(row=3, column=0, columnspan=3, pady=(10, 0))
