@@ -54,7 +54,9 @@ class NetworkManager:
                 print("Connected to", self.client_socket)
                 self.is_connected = True
             except (ConnectionRefusedError, socket.timeout):  # Also catch the timeout exception
-                print("Connection failed. Retrying in 5 seconds...")
+                print("Connection failed. Retrying in 2 seconds...")
+                self.client_socket = None
+
 
 
     def send_message(self, message):
