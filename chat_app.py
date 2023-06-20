@@ -1,6 +1,12 @@
 from NetworkManager import *
 from GuiManager import *
-from Cryptodome.PublicKey import RSA
+try:
+    from Cryptodome.PublicKey import RSA
+except ImportError:
+    try:
+        from Crypto.PublicKey import RSA
+    except ImportError:
+        print("Both import attempts failed. Please make sure you have either the 'Crypto' or 'Cryptodome' library installed.")
 
 def generate_rsa_keys():
     # Generate RSA key pair
