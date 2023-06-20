@@ -38,7 +38,8 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
-        self.root.after(5000, self.receive_message)
+        self.root.after(1000, self.receive_message)
+        self.root.after(1000, self.update_status)
         self.root.mainloop()
 
     def on_closing(self):
