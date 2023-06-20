@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
+import threading
 
 class GuiManager:
 
@@ -38,7 +39,9 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
-        self.root.after(1000, self.receive_message)
+        self.receive_thread = threading.Thread(target=self.receive_message)
+        self.receive_thread.daemon = True  # Daemonize the thread so it exits when the main program finishes
+        self.receive_thread.start()
         self.root.after(1000, self.update_status)
         self.root.mainloop()
 
@@ -63,7 +66,6 @@ class GuiManager:
             self.chat_app.send_file(file_path)
 
     def update_status(self):
-        print(self.chat_app.network_manager.info)
         if self.chat_app.network_manager.is_connected: 
             self.status_label['text'] = "Conntected"
         else: 
