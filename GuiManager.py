@@ -50,7 +50,7 @@ class GuiManager:
         msg = self.chat_app.network_manager.receive_message()
         if msg:
             self.display_message(msg)
-        self.root.after(5000, self.receive_message)
+        self.root.after(1000, self.receive_message)
 
     def send_message(self):
         message = self.text_field.get()
@@ -68,7 +68,7 @@ class GuiManager:
             self.status_label['text'] = "Conntected"
         else: 
             self.chat_app.network_manager.connect()
-        self.receive_message()
+        self.root.after(1000, self.update_status)
 
     def update_progress(self, value):
         self.progress['value'] = value
