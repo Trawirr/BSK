@@ -143,7 +143,7 @@ class NetworkManager:
         self.send_message(f"<START>|{file_name}|{file_size}")
         time.sleep(1)
 
-        chunk_size = 1024 - 16
+        chunk_size = 1024*1024 - 32
         bytes_sent = 0
 
         with open(file_path, "rb") as f:
@@ -178,7 +178,7 @@ class NetworkManager:
         with open(f"files/{file_name}", 'wb') as file:
             file_bytes = b""
             while True:
-                received_data = self.client_socket.recv(1024)
+                received_data = self.client_socket.recv(1024*1024)
                 data = self.key_manager.decrypt_message(received_data)
                 file_bytes += data
                 progress = (len(file_bytes) / file_size) * 100

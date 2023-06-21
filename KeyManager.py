@@ -53,11 +53,15 @@ class KeyManager:
     
     def encrypt_message(self, message):
         iv = self.generate_aes()
-        pad = AES.block_size - len(message) % AES.block_size
+        pad = (AES.block_size - len(message) % AES.block_size) % AES.block_size
+        print(f"len message: {len(message)}")
         message += bytes([pad]*pad)
+        #print(f"len message: {len(message)}")
+        print(f"pad byte: {bytes([pad])}")
         ciphertext = self.aes.encrypt(message)
-        print("bytes pad:", bytes([pad]*pad), f"len: {len(ciphertext)}")
-        encrypted_message = iv + ciphertext
+        print("len ciphertext", len(ciphertext), '\n')
+        #print("bytes pad:", bytes([pad]*pad), f"len: {len(ciphertext)}")
+        encrypted_message = iv + bytes([pad]*16) + ciphertext
         return encrypted_message
 
     def decrypt_message(self, ciphertext):
@@ -65,11 +69,13 @@ class KeyManager:
             raise ValueError("AES cipher is not initialized")
 
         iv = ciphertext[:16]
-        ciphertext = ciphertext[16:]
+        pad = ciphertext[16]
+        ciphertext = ciphertext[32:]
+        print("len ciphertext", len(ciphertext), '\n')
         
         self.generate_aes(iv=iv)
         message = self.aes.decrypt(ciphertext)
-        pad = message[-1]
-        print(f"pad {pad}, len: {len(message[:-pad])}")
-        return message[:-pad]
+        print(f"len message: {len(message)}")
+        if pad > 0: return message[:-pad]
+        return message
     
