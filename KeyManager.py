@@ -10,7 +10,7 @@ def import_crypto_module(module_name):
 
 RSA = import_crypto_module('PublicKey.RSA')
 AES = import_crypto_module('Cipher.AES')
-get_random_bytes = import_crypto_module('Random')
+Random = import_crypto_module('Random')
 
 class KeyManager:
     def __init__(self) -> None:
@@ -25,7 +25,7 @@ class KeyManager:
         #self.public = self.private.publickey()
         self.private = prk
         self.public = puk
-        self.session_key = get_random_bytes(32)
+        self.session_key = Random.get_random_bytes(32)
 
     def save_rsa(self):
         with open("private/my_private_rsa.pem", 'wb') as file:

@@ -57,9 +57,9 @@ class GuiManager:
             password_hash = None
 
         self.chat_app.set_login_details(username_hash, password_hash)
-        self.receive_thread = threading.Thread(target=self.update_status)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
+        self.status_thread = threading.Thread(target=self.update_status)
+        self.status_thread.daemon = True
+        self.status_thread.start()
         self.root.mainloop()
 
     def start_receiving(self):
