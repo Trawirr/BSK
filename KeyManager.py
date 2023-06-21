@@ -50,9 +50,16 @@ class KeyManager:
         return rsa_private_cipher.decrypt(encrypted_session_key)
     
     def encrypt_message(self, message):
-        self.generate_aes()
-        return self.aes.encrypt(message)
+        if self.aes is None:
+            raise ValueError("AES cipher is not initialized")
 
-    def decrypt_message(self, message):
-        self.generate_aes()
-        return self.aes.decrypt(message)
+        ciphertext, tag = self.aes.encrypt_and_digest(message)
+        return ciphertext + tag
+
+    def decrypt_message(self, ciphertext):
+        if self.aes is None:
+            raise ValueError("AES cipher is not initialized")
+
+        tag = ciphertext[-16:]
+        ciphertext = ciphertext[:-16]
+        return self.aes.decrypt_and_verify(ciphertext, tag)
