@@ -10,6 +10,7 @@ def import_crypto_module(module_name):
 
 RSA = import_crypto_module('PublicKey.RSA')
 AES = import_crypto_module('Cipher.AES')
+PKCS1_OAEP = import_crypto_module('Cipher.PKCS1_OAEP')
 Random = import_crypto_module('Random')
 
 class KeyManager:
@@ -41,4 +42,9 @@ class KeyManager:
         print(f"AES created: {self.aes}")
 
     def encrypt_session_key(self):
-        pass
+        rsa_public_cipher = PKCS1_OAEP.new(RSA.import_key(self.friends_public))
+        return rsa_public_cipher.encrypt(self.session_key)
+
+    def decrypt_session_key(self, encrypted_session_key):
+        rsa_private_cipher = PKCS1_OAEP.new(self.private)
+        return rsa_private_cipher.decrypt(encrypted_session_key)

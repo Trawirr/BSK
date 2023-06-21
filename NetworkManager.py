@@ -37,16 +37,28 @@ class NetworkManager:
                     self.client_socket = conn  # Set the client_socket attribute
                     self.generate_keys()
 
-                    self.key_manager.friends_public, self.key_manager.session_key = self.receive_key()
+                    # Sending client's public key
+                    self.client_socket.send(self.key_manager.public.publickey().export_key(format='PEM'))
 
-                    if self.key_manager.friends_public is not None and self.key_manager.session_key is not None:
-                        print(f"-- Public key --\n{self.key_manager.friends_public}")
-                        print(f"-- Session key --\n{self.key_manager.session_key}")
-                        self.is_connected = True
-                        self.chat_app.gui_manager.start_receiving()
-                    else:
-                        self.client_socket.close()
-                        self.client_socket = None
+                    # Receiving encrypted session key
+                    session_key = self.client_socket.recv(1024)
+                    self.key_manager.session_key = self.key_manager.decrypt_session_key(session_key)
+
+                    print("Received session key:", self.key_manager.session_key)
+
+                    self.is_connected = True
+                    self.chat_app.gui_manager.start_receiving()
+
+                    # self.key_manager.friends_public, self.key_manager.session_key = self.receive_key()
+
+                    # if self.key_manager.friends_public is not None and self.key_manager.session_key is not None:
+                    #     print(f"-- Public key --\n{self.key_manager.friends_public}")
+                    #     print(f"-- Session key --\n{self.key_manager.session_key}")
+                    #     self.is_connected = True
+                    #     self.chat_app.gui_manager.start_receiving()
+                    # else:
+                    #     self.client_socket.close()
+                    #     self.client_socket = None
                 else:
                     conn.close()
             else:  # If there was no connection request within 2 seconds
@@ -63,7 +75,19 @@ class NetworkManager:
                 self.client_socket.connect(("localhost", self.client_port))
                 print("Connected to", self.client_socket)
                 self.generate_keys()
-                self.send_keys()
+
+                # Receiving client's public key
+                friends_public_key = self.client_socket.recv(4096)
+                self.key_manager.friends_public = friends_public_key
+
+                print("Received client's public key:", self.key_manager.friends_public)
+
+                # Sending encrypted session key
+                self.client_socket.sendall(self.key_manager.encrypt_session_key())
+                
+                print("Encrypted session key sent, decrypted session key:", self.key_manager.session_key)
+
+                #self.send_keys()
                 self.is_connected = True
                 self.chat_app.gui_manager.start_receiving()
             except (ConnectionRefusedError, socket.timeout):  # Also catch the timeout exception
