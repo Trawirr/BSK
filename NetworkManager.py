@@ -32,11 +32,11 @@ class NetworkManager:
 
     def accept_connection_try_connect(self):
         while not self.is_connected:
-            if True:  #ready_to_read:  # If there is a connection request
+            if True:
                 conn, addr = self.server_socket.accept()
                 if self.client_socket is None:
                     print(f"Connection accepted from {addr}")
-                    self.client_socket = conn  # Set the client_socket attribute
+                    self.client_socket = conn
                     self.generate_keys()
 
                     # Sending client's public key
@@ -53,20 +53,9 @@ class NetworkManager:
 
                     self.is_connected = True
                     self.chat_app.gui_manager.start_receiving()
-
-                    # self.key_manager.friends_public, self.key_manager.session_key = self.receive_key()
-
-                    # if self.key_manager.friends_public is not None and self.key_manager.session_key is not None:
-                    #     print(f"-- Public key --\n{self.key_manager.friends_public}")
-                    #     print(f"-- Session key --\n{self.key_manager.session_key}")
-                    #     self.is_connected = True
-                    #     self.chat_app.gui_manager.start_receiving()
-                    # else:
-                    #     self.client_socket.close()
-                    #     self.client_socket = None
                 else:
                     conn.close()
-            else:  # If there was no connection request within 2 seconds
+            else:
                 print("No connection request in last 2 seconds.")
                 self.connect()
 
@@ -91,35 +80,14 @@ class NetworkManager:
                 print("Session key:", self.key_manager.session_key)
                 self.is_connected = True
                 self.chat_app.gui_manager.start_receiving()
-            except (ConnectionRefusedError, socket.timeout):  # Also catch the timeout exception
+            except (ConnectionRefusedError, socket.timeout):
                 print("Connection failed. Retrying in 2 seconds...")
                 self.client_socket = None
 
     def generate_keys(self):
         self.key_manager = KeyManager()
         self.key_manager.generate_rsa(self.prk, self.puk)
-        #self.key_manager.save_rsa()
         self.key_manager.generate_aes()
-
-    # def send_keys(self):
-    #     print("sending public key")
-    #     self.client_socket.send(self.key_manager.public.publickey().export_key(format='PEM', passphrase=None, pkcs=1))
-    #     time.sleep(1)  # Add a small delay before sending the session key
-    #     print("sending session key")
-    #     self.client_socket.sendall(self.key_manager.session_key)
-
-    # def receive_key(self):
-    #     print("Trying to receive public key...")
-    #     public_key = self.client_socket.recv(4096)
-    #     print("Public key received.", public_key)
-
-    #     print("Trying to receive session key...")
-    #     session_key = self.client_socket.recv(1024) 
-    #     print("Session key received.", session_key)
-
-    #     self.key_manager.generate_aes(session_key)
-
-    #     return public_key, session_key
 
     def send_message(self, message):
         if self.client_socket is not None:
@@ -134,7 +102,7 @@ class NetworkManager:
     def receive_message(self):
         if self.client_socket is not None and self.is_connected and not self.sending_file:
             try:
-                self.client_socket.settimeout(1)  # Set a timeout of 5 seconds
+                self.client_socket.settimeout(1)
                 message = self.key_manager.decrypt_message(self.client_socket.recv(self.buffer_size)).decode()
 
                 if self.is_file(message):
@@ -149,7 +117,6 @@ class NetworkManager:
                     print("No message received.")
             except socket.timeout:
                 pass
-                #print("Timeout: No message received.")
             except socket.error as e:
                 print("Error receiving message:", str(e))
                 self.client_socket = None
@@ -176,7 +143,7 @@ class NetworkManager:
         self.send_message(f"<START>|{file_name}|{file_size}")
         time.sleep(1)
 
-        chunk_size = 1024*1024 - 32
+        chunk_size = 1024 - 16
         bytes_sent = 0
 
         with open(file_path, "rb") as f:
@@ -200,9 +167,6 @@ class NetworkManager:
                 self.chat_app.gui_manager.update_progress(progress)
                 print(f"Progress: {progress:.2f}%")
 
-            # End tag
-            # time.sleep(5)
-            # self.send_message("<END>")
         self.sending_file = False
 
     def receive_file(self, file_info):
@@ -212,19 +176,10 @@ class NetworkManager:
         _, file_name, file_size = file_info.split('|')
         file_size = int(file_size)
         with open(f"files/{file_name}", 'wb') as file:
-            # print("open file")
-            #done = False
             file_bytes = b""
             while True:
-                # print("while loop")
-                received_data = self.client_socket.recv(1024*1024)
-                # print(len(received_data))
-                # print(received_data)
+                received_data = self.client_socket.recv(1024)
                 data = self.key_manager.decrypt_message(received_data)
-                # print(data,'\n')
-                # if data == "<END>":
-                #     done = True
-                # else:
                 file_bytes += data
                 progress = (len(file_bytes) / file_size) * 100
                 print(f"Progress: {progress:.2f}%")

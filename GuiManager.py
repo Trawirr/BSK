@@ -76,12 +76,10 @@ class GuiManager:
     def receive_messages_background(self):
         while True:
             if not self.chat_app.network_manager.sending_file:
-                #print("start", self.chat_app.network_manager.sending_file)
                 msg = self.chat_app.network_manager.receive_message()
                 if msg:
                     self.display_message("Friend: " + msg)
             time.sleep(1)
-            #print("end")
 
     def send_message(self):
         message = self.text_field.get()

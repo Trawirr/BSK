@@ -35,13 +35,13 @@ class KeyManager:
         with open("public/my_public_rsa.pem", 'wb') as file:
             file.write(self.public.export_key())
 
-    def generate_aes(self, key=None, nonce=None):
+    def generate_aes(self, key=None, iv=None):
         if not key: 
             key = self.session_key
-        if not nonce: 
-            nonce = Random.get_random_bytes(16)
-        self.aes = AES.new(key, AES.MODE_CBC, nonce)
-        return nonce
+        if not iv: 
+            iv = Random.get_random_bytes(16)
+        self.aes = AES.new(key, AES.MODE_CBC, iv)
+        return iv
 
     def encrypt_session_key(self):
         rsa_public_cipher = PKCS1_OAEP.new(RSA.import_key(self.friends_public))
@@ -52,11 +52,12 @@ class KeyManager:
         return rsa_private_cipher.decrypt(encrypted_session_key)
     
     def encrypt_message(self, message):
-        nonce = self.generate_aes()
-
-        ciphertext, tag = self.aes.encrypt_and_digest(message)
-        encrypted_message = nonce + tag + ciphertext
-
+        iv = self.generate_aes()
+        pad = AES.block_size - len(message) % AES.block_size
+        message += bytes([pad]*pad)
+        ciphertext = self.aes.encrypt(message)
+        print("bytes pad:", bytes([pad]*pad), f"len: {len(ciphertext)}")
+        encrypted_message = iv + ciphertext
         return encrypted_message
 
     def decrypt_message(self, ciphertext):
@@ -64,11 +65,11 @@ class KeyManager:
             raise ValueError("AES cipher is not initialized")
 
         iv = ciphertext[:16]
-        tag = ciphertext[16:32]
-        ciphertext = ciphertext[32:]
+        ciphertext = ciphertext[16:]
         
-        self.generate_aes(nonce=iv)
-        return self.aes.decrypt_and_verify(ciphertext, tag)
+        self.generate_aes(iv=iv)
+        message = self.aes.decrypt(ciphertext)
+        pad = message[-1]
+        print(f"pad {pad}, len: {len(message[:-pad])}")
+        return message[:-pad]
     
-    def encrypt_chunk(self, chunk):
-        pass
