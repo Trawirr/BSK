@@ -1,7 +1,16 @@
-from Cryptodome.PublicKey import RSA
-from Cryptodome.Cipher import AES
-from Cryptodome.Util.Padding import pad, unpad
-from Cryptodome.Random import get_random_bytes
+def import_crypto_module(module_name):
+    try:
+        module = __import__(f'Cryptodome.{module_name}', fromlist=[module_name])
+    except ImportError:
+        try:
+            module = __import__(f'Crypto.{module_name}', fromlist=[module_name])
+        except ImportError:
+            raise ImportError(f"Both import attempts failed. Please make sure you have either the 'Crypto' or 'Cryptodome' library installed for the {module_name} module.")
+    return module
+
+RSA = import_crypto_module('PublicKey.RSA')
+AES = import_crypto_module('Cipher.AES')
+get_random_bytes = import_crypto_module('Random')
 
 class KeyManager:
     def __init__(self) -> None:
@@ -11,9 +20,11 @@ class KeyManager:
         self.session_key = None
         self.aes = None
 
-    def generate_rsa(self):
-        self.private = RSA.generate(2048)
-        self.public = self.private.publickey()
+    def generate_rsa(self, prk, puk):
+        #self.private = RSA.generate(2048)
+        #self.public = self.private.publickey()
+        self.private = prk
+        self.public = puk
         self.session_key = get_random_bytes(32)
 
     def save_rsa(self):

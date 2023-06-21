@@ -3,6 +3,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 import threading
+import hashlib
 import time
 
 class GuiManager:
@@ -41,9 +42,24 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
-        self.status_thread = threading.Thread(target=self.update_status)
-        self.status_thread.daemon = True
-        self.status_thread.start()
+        username = self.ask_username()
+        password = self.ask_password()
+
+        # Hashing the username and password.
+        if username is not None:
+            username_hash = hashlib.sha256(username.encode()).hexdigest()
+        else:
+            username_hash = None
+
+        if password is not None:
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+        else:
+            password_hash = None
+
+        self.chat_app.set_login_details(username_hash, password_hash)
+        self.receive_thread = threading.Thread(target=self.update_status)
+        self.receive_thread.daemon = True
+        self.receive_thread.start()
         self.root.mainloop()
 
     def start_receiving(self):
@@ -94,3 +110,7 @@ class GuiManager:
     def ask_password(self):
         password = tk.simpledialog.askstring("Password", "Enter password:", show='*')
         return password
+    
+    def ask_username(self):
+        username = tk.simpledialog.askstring("Username", "Enter username:")
+        return username

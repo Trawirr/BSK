@@ -1,15 +1,15 @@
-import select
 import socket
 import threading
 import time
 from KeyManager import KeyManager
-from Cryptodome.PublicKey import RSA
 
 class NetworkManager:
-    def __init__(self, my_port, second_port, buffer_size, chat_app):
+    def __init__(self, my_port, second_port, buffer_size, chat_app, prk, puk):
         self.chat_app = chat_app
         self.buffer_size = buffer_size
         self.client_port = second_port
+        self.prk = prk
+        self.puk = puk
         self.client_socket = None
         self.is_connected = False
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,8 +72,8 @@ class NetworkManager:
 
     def generate_keys(self):
         self.key_manager = KeyManager()
-        self.key_manager.generate_rsa()
-        self.key_manager.save_rsa()
+        self.key_manager.generate_rsa(self.prk, self.puk)
+        #self.key_manager.save_rsa()
         self.key_manager.generate_aes()
 
     def send_keys(self):
