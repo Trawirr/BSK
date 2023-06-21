@@ -75,15 +75,12 @@ class GuiManager:
 
     def receive_messages_background(self):
         while True:
-            try:
-                if not self.chat_app.network_manager.sending_file:
-                    #print("start", self.chat_app.network_manager.sending_file)
-                    msg = self.chat_app.network_manager.receive_message()
-                    if msg:
-                        self.display_message("Friend: " + msg)
-                time.sleep(1)
-            except Exception as e:
-                print(f"receive_messages_background error: {e}, sending file: {self.chat_app.network_manager.sending_file}")
+            if not self.chat_app.network_manager.sending_file:
+                #print("start", self.chat_app.network_manager.sending_file)
+                msg = self.chat_app.network_manager.receive_message()
+                if msg:
+                    self.display_message("Friend: " + msg)
+            time.sleep(1)
             #print("end")
 
     def send_message(self):

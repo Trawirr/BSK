@@ -201,15 +201,20 @@ class NetworkManager:
         time.sleep(2)
         _, file_name, file_size = file_info.split()
         with open(f"files/{file_name}", 'wb') as file:
+            print("open file")
             done = False
             file_bytes = b""
             while not done:
-                data = self.key_manager.decrypt_message(self.client_socket.recv(1024)).decode()
+                received_data = self.client_socket.recv(1024)
+                print(len(received_data))
+                print(received_data)
+                data = self.key_manager.decrypt_message(received_data)
+                print(data,'\n')
                 if file_bytes[-5:] == b"<END>":
                     done = True
                 else:
                     file_bytes += data
-                print(f"file bytes: {file_bytes}")
+                print(f"file bytes: {len(file_bytes)}")
 
             file.write(file_bytes)
         self.sending_file = False
