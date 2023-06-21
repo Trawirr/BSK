@@ -52,8 +52,8 @@ class ChatApp:
             with open(public_key_file, 'rb') as file:
                 public_key = RSA.import_key(file.read())
 
-        print(private_key.export_key())
-        print(public_key.export_key())
+        # print(private_key.export_key())
+        # print(public_key.export_key())
 
         self.network_manager = NetworkManager(my_port=self.my_port, second_port=self.second_port, buffer_size=1024, chat_app=self, prk=private_key, puk=public_key)
 

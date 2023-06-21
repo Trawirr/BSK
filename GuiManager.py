@@ -84,21 +84,30 @@ class GuiManager:
             #print("end")
 
     def send_message(self):
-        message = self.text_field.get() + " "
-        if message:
+        message = self.text_field.get()
+        if message and not self.chat_app.network_manager.sending_file:
+            message = message + " "
             self.chat_app.network_manager.send_message(message)
             self.display_message(f"You: {message}")
-        self.text_field.delete(0, tk.END)
+            self.text_field.delete(0, tk.END)
+
+    def send_file_background(self):
+        self.chat_app.network_manager.send_file(self.file_path)
 
     def send_file(self):
         file_path = filedialog.askopenfilename()
         if file_path:
-            self.chat_app.network_manager.send_file(file_path)
+            self.file_path = file_path
+            
+            self.send_file_thread = threading.Thread(target=self.send_file_background)
+            self.send_file_thread.daemon = True
+            self.send_file_thread.start()
 
     def update_status(self):
         if self.chat_app.network_manager.is_connected: 
-            self.status_label['text'] = "Conntected"
-        else: 
+            self.status_label['text'] = "Connected"
+        else:
+            self.status_label['text'] = "Disconnected"
             self.chat_app.network_manager.connect()
         self.root.after(1000, self.update_status)
 

@@ -47,7 +47,9 @@ class NetworkManager:
                     self.key_manager.session_key = self.key_manager.decrypt_session_key(session_key)
                     self.key_manager.generate_aes()
 
-                    print("Received session key:", self.key_manager.session_key)
+                    # print("Received session key:", self.key_manager.session_key)
+                    
+                    print("Session key:", self.key_manager.session_key)
 
                     self.is_connected = True
                     self.chat_app.gui_manager.start_receiving()
@@ -83,14 +85,10 @@ class NetworkManager:
                 friends_public_key = self.client_socket.recv(4096)
                 self.key_manager.friends_public = friends_public_key
 
-                print("Received client's public key:", self.key_manager.friends_public)
-
                 # Sending encrypted session key
                 self.client_socket.sendall(self.key_manager.encrypt_session_key())
-                
-                print("Encrypted session key sent, decrypted session key:", self.key_manager.session_key)
 
-                #self.send_keys()
+                print("Session key:", self.key_manager.session_key)
                 self.is_connected = True
                 self.chat_app.gui_manager.start_receiving()
             except (ConnectionRefusedError, socket.timeout):  # Also catch the timeout exception
@@ -150,9 +148,13 @@ class NetworkManager:
                 else:
                     print("No message received.")
             except socket.timeout:
-                print("Timeout: No message received.")
+                pass
+                #print("Timeout: No message received.")
             except socket.error as e:
                 print("Error receiving message:", str(e))
+                self.client_socket = None
+                self.is_connected = False
+                self.chat_app.gui_manager.display_message(f"-- DISCONNECTED --")
         else:
             print("No client connection established.")
         return None
@@ -232,4 +234,3 @@ class NetworkManager:
 
             file.write(file_bytes)
         self.sending_file = False
-        print("\n\nEND END end")
