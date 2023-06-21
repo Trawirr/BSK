@@ -43,6 +43,7 @@ class NetworkManager:
                     # Receiving encrypted session key
                     session_key = self.client_socket.recv(1024)
                     self.key_manager.session_key = self.key_manager.decrypt_session_key(session_key)
+                    self.key_manager.generate_aes()
 
                     print("Received session key:", self.key_manager.session_key)
 
@@ -100,30 +101,30 @@ class NetworkManager:
         #self.key_manager.save_rsa()
         self.key_manager.generate_aes()
 
-    def send_keys(self):
-        print("sending public key")
-        self.client_socket.send(self.key_manager.public.publickey().export_key(format='PEM', passphrase=None, pkcs=1))
-        time.sleep(1)  # Add a small delay before sending the session key
-        print("sending session key")
-        self.client_socket.sendall(self.key_manager.session_key)
+    # def send_keys(self):
+    #     print("sending public key")
+    #     self.client_socket.send(self.key_manager.public.publickey().export_key(format='PEM', passphrase=None, pkcs=1))
+    #     time.sleep(1)  # Add a small delay before sending the session key
+    #     print("sending session key")
+    #     self.client_socket.sendall(self.key_manager.session_key)
 
-    def receive_key(self):
-        print("Trying to receive public key...")
-        public_key = self.client_socket.recv(4096)
-        print("Public key received.", public_key)
+    # def receive_key(self):
+    #     print("Trying to receive public key...")
+    #     public_key = self.client_socket.recv(4096)
+    #     print("Public key received.", public_key)
 
-        print("Trying to receive session key...")
-        session_key = self.client_socket.recv(1024) 
-        print("Session key received.", session_key)
+    #     print("Trying to receive session key...")
+    #     session_key = self.client_socket.recv(1024) 
+    #     print("Session key received.", session_key)
 
-        self.key_manager.generate_aes(session_key)
+    #     self.key_manager.generate_aes(session_key)
 
-        return public_key, session_key
+    #     return public_key, session_key
 
     def send_message(self, message):
         if self.client_socket is not None:
             try:
-                self.client_socket.send(message.encode())
+                self.client_socket.send(self.key_manager.encrypt_message(message.encode()))
                 print("Message sent:", message)
             except socket.error as e:
                 print("Error sending message:", str(e))
@@ -135,7 +136,7 @@ class NetworkManager:
         if self.client_socket is not None and self.is_connected:
             try:
                 self.client_socket.settimeout(1)  # Set a timeout of 5 seconds
-                message = self.client_socket.recv(self.buffer_size).decode()
+                message = self.key_manager.decrypt_message(self.client_socket.recv(self.buffer_size)).decode()
                 if message:
                     print("Received message:", message)
                     return message

@@ -48,3 +48,9 @@ class KeyManager:
     def decrypt_session_key(self, encrypted_session_key):
         rsa_private_cipher = PKCS1_OAEP.new(self.private)
         return rsa_private_cipher.decrypt(encrypted_session_key)
+    
+    def encrypt_message(self, message):
+        return self.aes.encrypt(message)
+
+    def decrypt_message(self, message):
+        return self.aes.decrypt(message)
