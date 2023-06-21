@@ -22,7 +22,7 @@ def generate_rsa_keys():
 
 class ChatApp:
     def __init__(self, my_port, second_port):
-        self.network_manager = NetworkManager(my_port=my_port, second_port=second_port, buffer_size=1024)
+        self.network_manager = NetworkManager(my_port=my_port, second_port=second_port, buffer_size=1024, chat_app=self)
         self.gui_manager = GuiManager(self)
 
         self.gui_manager.run()

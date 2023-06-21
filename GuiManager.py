@@ -9,6 +9,7 @@ class GuiManager:
 
     def __init__(self, chat_app):
         self.chat_app = chat_app
+        self.receive_thread = None
 
         self.root = tk.Tk()
         self.root.title('Secure Chat App')
@@ -40,13 +41,17 @@ class GuiManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def run(self):
-        self.receive_thread = threading.Thread(target=self.receive_messages_background)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
-        self.receive_thread = threading.Thread(target=self.update_status)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
+        self.status_thread = threading.Thread(target=self.update_status)
+        self.status_thread.daemon = True
+        self.status_thread.start()
         self.root.mainloop()
+
+    def start_receiving(self):
+        if not self.receive_thread:
+            print("Receiving messages started")
+            self.receive_thread = threading.Thread(target=self.receive_messages_background)
+            self.receive_thread.daemon = True
+            self.receive_thread.start()
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
