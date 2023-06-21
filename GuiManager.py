@@ -36,7 +36,7 @@ class GuiManager:
         self.status_label = ttk.Label(self.frame, text='Disconnected')
         self.status_label.grid(row=3, column=0, columnspan=3, pady=(10, 0))
 
-        self.progress = ttk.Progressbar(self.frame, mode='indeterminate')
+        self.progress = ttk.Progressbar(self.frame, mode='determinate')
         self.progress.grid(row=4, column=0, columnspan=3, pady=(10, 0))
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -88,6 +88,7 @@ class GuiManager:
         if message:
             self.chat_app.network_manager.send_message(message)
             self.display_message(f"You: {message}")
+        self.text_field.delete(0, tk.END)
 
     def send_file(self):
         file_path = filedialog.askopenfilename()

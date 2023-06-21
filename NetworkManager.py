@@ -141,9 +141,10 @@ class NetworkManager:
 
                 if self.is_file(message):
                     print("File sending started")
+                    self.chat_app.gui_manager.display_message(f"Friend: sending file: {message.split('|')[1]}")
                     self.receive_file(message)
 
-                if message:
+                elif message:
                     print("Received message:", message)
                     return message
                 else:
@@ -157,20 +158,23 @@ class NetworkManager:
         return None
     
     def is_file(self, message: str):
-        if message.startswith("<START>") and len(message.split()) == 3:
+        if message.startswith("<START>") and len(message.split('|')) == 3:
             return True
         return False
 
     def send_file(self, file_path):
+        self.sending_file = True
+        self.client_socket.settimeout(5)
         file_name = file_path.split('/')[-1]
+        self.chat_app.gui_manager.display_message(f"You: sending file: {file_name}")
         file_size = os.path.getsize(file_path)
         with open(file_path, "rb") as f:
             data = f.read()
 
-        self.send_message(f"<START> {file_name} {file_size}")
+        self.send_message(f"<START>|{file_name}|{file_size}")
         time.sleep(1)
 
-        chunk_size = 1024 - 32
+        chunk_size = 1024*1024 - 32
         bytes_sent = 0
 
         with open(file_path, "rb") as f:
@@ -191,31 +195,41 @@ class NetworkManager:
                 
                 # Print progress
                 progress = (bytes_sent / file_size) * 100
+                self.chat_app.gui_manager.update_progress(progress)
                 print(f"Progress: {progress:.2f}%")
 
             # End tag
-            self.send_message("<END>")
+            # time.sleep(5)
+            # self.send_message("<END>")
+        self.sending_file = False
 
     def receive_file(self, file_info):
         self.sending_file = True
         time.sleep(2)
-        _, file_name, file_size = file_info.split()
+        self.client_socket.settimeout(5)
+        _, file_name, file_size = file_info.split('|')
+        file_size = int(file_size)
         with open(f"files/{file_name}", 'wb') as file:
-            print("open file")
-            done = False
+            # print("open file")
+            #done = False
             file_bytes = b""
-            while not done:
-                received_data = self.client_socket.recv(1024)
-                print(len(received_data))
-                print(received_data)
+            while True:
+                # print("while loop")
+                received_data = self.client_socket.recv(1024*1024)
+                # print(len(received_data))
+                # print(received_data)
                 data = self.key_manager.decrypt_message(received_data)
-                print(data,'\n')
-                if file_bytes[-5:] == b"<END>":
-                    done = True
-                else:
-                    file_bytes += data
-                print(f"file bytes: {len(file_bytes)}")
+                # print(data,'\n')
+                # if data == "<END>":
+                #     done = True
+                # else:
+                file_bytes += data
+                progress = (len(file_bytes) / file_size) * 100
+                print(f"Progress: {progress:.2f}%")
+                self.chat_app.gui_manager.update_progress(progress)
+                if len(file_bytes) == file_size:
+                    break
 
             file.write(file_bytes)
         self.sending_file = False
-        print("end")
+        print("\n\nEND END end")

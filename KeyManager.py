@@ -56,6 +56,8 @@ class KeyManager:
 
         ciphertext, tag = self.aes.encrypt_and_digest(message)
         encrypted_message = nonce + tag + ciphertext  # Include the IV in the ciphertext
+
+        #print(f"------\nnonce: {nonce}\ntag: {tag}\nciphertext{ciphertext}-----\n")
         return encrypted_message
 
     def decrypt_message(self, ciphertext):
@@ -65,6 +67,7 @@ class KeyManager:
         iv = ciphertext[:16]
         tag = ciphertext[16:32]
         ciphertext = ciphertext[32:]
+        #print(f"-----\nnonce: {iv}\ntag: {tag}\nciphertext{ciphertext}-----\n")
         self.generate_aes(nonce=iv)
         return self.aes.decrypt_and_verify(ciphertext, tag)
     
