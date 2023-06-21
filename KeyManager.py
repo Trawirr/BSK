@@ -50,7 +50,9 @@ class KeyManager:
         return rsa_private_cipher.decrypt(encrypted_session_key)
     
     def encrypt_message(self, message):
+        self.generate_aes()
         return self.aes.encrypt(message)
 
     def decrypt_message(self, message):
+        self.generate_aes()
         return self.aes.decrypt(message)
