@@ -57,6 +57,12 @@ class ChatApp:
 
         self.network_manager = NetworkManager(my_port=self.my_port, second_port=self.second_port, buffer_size=1024, chat_app=self, prk=private_key, puk=public_key)
 
+    def generate_rsa_keys(self):
+        key = RSA.generate(2048)
+        private_key = key
+        public_key = key.publickey()
+        return private_key, public_key
+
     def encrypt_with_aes(self, password, data):
         password = hashlib.sha256(password.encode()).digest()
         cipher = AES.new(password, AES.MODE_CBC)
