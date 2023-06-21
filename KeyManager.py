@@ -35,11 +35,13 @@ class KeyManager:
         with open("public/my_public_rsa.pem", 'wb') as file:
             file.write(self.public.export_key())
 
-    def generate_aes(self, key=None):
-        if not key: key = self.session_key
-        nonce = b"1010101011010111"
+    def generate_aes(self, key=None, nonce=None):
+        if not key: 
+            key = self.session_key
+        if not nonce: 
+            nonce = Random.get_random_bytes(16)
         self.aes = AES.new(key, AES.MODE_EAX, nonce)
-        print(f"AES created: {self.aes}")
+        return nonce
 
     def encrypt_session_key(self):
         rsa_public_cipher = PKCS1_OAEP.new(RSA.import_key(self.friends_public))
@@ -50,16 +52,18 @@ class KeyManager:
         return rsa_private_cipher.decrypt(encrypted_session_key)
     
     def encrypt_message(self, message):
-        if self.aes is None:
-            raise ValueError("AES cipher is not initialized")
+        nonce = self.generate_aes()
 
         ciphertext, tag = self.aes.encrypt_and_digest(message)
-        return ciphertext + tag
+        encrypted_message = nonce + tag + ciphertext  # Include the IV in the ciphertext
+        return encrypted_message
 
     def decrypt_message(self, ciphertext):
         if self.aes is None:
             raise ValueError("AES cipher is not initialized")
 
-        tag = ciphertext[-16:]
-        ciphertext = ciphertext[:-16]
+        iv = ciphertext[:16]
+        tag = ciphertext[16:32]
+        ciphertext = ciphertext[32:]
+        self.generate_aes(nonce=iv)
         return self.aes.decrypt_and_verify(ciphertext, tag)
