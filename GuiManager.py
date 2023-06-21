@@ -75,10 +75,16 @@ class GuiManager:
 
     def receive_messages_background(self):
         while True:
-            msg = self.chat_app.network_manager.receive_message()
-            if msg:
-                self.display_message("Friend: " + msg)
-            time.sleep(1)
+            try:
+                if not self.chat_app.network_manager.sending_file:
+                    #print("start", self.chat_app.network_manager.sending_file)
+                    msg = self.chat_app.network_manager.receive_message()
+                    if msg:
+                        self.display_message("Friend: " + msg)
+                time.sleep(1)
+            except Exception as e:
+                print(f"receive_messages_background error: {e}, sending file: {self.chat_app.network_manager.sending_file}")
+            #print("end")
 
     def send_message(self):
         message = self.text_field.get() + " "
@@ -89,7 +95,7 @@ class GuiManager:
     def send_file(self):
         file_path = filedialog.askopenfilename()
         if file_path:
-            self.chat_app.send_file(file_path)
+            self.chat_app.network_manager.send_file(file_path)
 
     def update_status(self):
         if self.chat_app.network_manager.is_connected: 

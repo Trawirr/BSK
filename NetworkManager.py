@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import os
 from KeyManager import KeyManager
 
 class NetworkManager:
@@ -12,6 +13,7 @@ class NetworkManager:
         self.puk = puk
         self.client_socket = None
         self.is_connected = False
+        self.sending_file = False
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(("localhost", my_port))
         self.server_socket.listen(1)
@@ -132,11 +134,15 @@ class NetworkManager:
             print("No client connection established.")
 
     def receive_message(self):
-        print("receiving message... is connected:", self.is_connected)
-        if self.client_socket is not None and self.is_connected:
+        if self.client_socket is not None and self.is_connected and not self.sending_file:
             try:
                 self.client_socket.settimeout(1)  # Set a timeout of 5 seconds
                 message = self.key_manager.decrypt_message(self.client_socket.recv(self.buffer_size)).decode()
+
+                if self.is_file(message):
+                    print("File sending started")
+                    self.receive_file(message)
+
                 if message:
                     print("Received message:", message)
                     return message
@@ -149,3 +155,62 @@ class NetworkManager:
         else:
             print("No client connection established.")
         return None
+    
+    def is_file(self, message: str):
+        if message.startswith("<START>") and len(message.split()) == 3:
+            return True
+        return False
+
+    def send_file(self, file_path):
+        file_name = file_path.split('/')[-1]
+        file_size = os.path.getsize(file_path)
+        with open(file_path, "rb") as f:
+            data = f.read()
+
+        self.send_message(f"<START> {file_name} {file_size}")
+        time.sleep(1)
+
+        chunk_size = 1024 - 32
+        bytes_sent = 0
+
+        with open(file_path, "rb") as f:
+            while True:
+                # Read chunk from file
+                data = f.read(chunk_size)
+                if not data:
+                    break
+                    
+                # Encrypt the chunk
+                encrypted = self.key_manager.encrypt_message(data)
+                
+                # Send encrypted chunk
+                self.client_socket.sendall(encrypted)
+                
+                # Update the amount of bytes sent
+                bytes_sent += len(data)
+                
+                # Print progress
+                progress = (bytes_sent / file_size) * 100
+                print(f"Progress: {progress:.2f}%")
+
+            # End tag
+            self.send_message("<END>")
+
+    def receive_file(self, file_info):
+        self.sending_file = True
+        time.sleep(2)
+        _, file_name, file_size = file_info.split()
+        with open(f"files/{file_name}", 'wb') as file:
+            done = False
+            file_bytes = b""
+            while not done:
+                data = self.key_manager.decrypt_message(self.client_socket.recv(1024)).decode()
+                if file_bytes[-5:] == b"<END>":
+                    done = True
+                else:
+                    file_bytes += data
+                print(f"file bytes: {file_bytes}")
+
+            file.write(file_bytes)
+        self.sending_file = False
+        print("end")

@@ -67,3 +67,6 @@ class KeyManager:
         ciphertext = ciphertext[32:]
         self.generate_aes(nonce=iv)
         return self.aes.decrypt_and_verify(ciphertext, tag)
+    
+    def encrypt_chunk(self, chunk):
+        pass
